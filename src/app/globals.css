@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+body {
+  background-color: #0e0f12;
+  color: white;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.75rem) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.toast-animate {
+  animation: toast-in 0.25s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-animate {
+    animation: none;
+  }
+}
+
+html {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+}
