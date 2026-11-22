@@ -10,6 +10,9 @@ cloudinary.config({
 
 export const PROFILE_IMAGE_FOLDER = "rusauth/profile-images";
 
+/** The only profile photo formats accepted (signed into every upload). */
+export const ALLOWED_IMAGE_FORMATS = "png,jpg,jpeg";
+
 export function createProfilePublicId(uid: string): string {
   return `${uid}_${randomBytes(8).toString("hex")}`;
 }
