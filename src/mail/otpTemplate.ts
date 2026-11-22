@@ -10,8 +10,8 @@ interface OtpTemplateInput {
   ignoreNote: string;
 }
 
-const BRAND_BLUE = "#3B82F6";
-const MUTED = "#6B7280";
+const BRAND_BLUE = "#0567E3";
+const MUTED = "#A7B8C2";
 
 export function renderOtpEmail(input: OtpTemplateInput): string {
   const safeOtp = escapeHtml(input.otp);
