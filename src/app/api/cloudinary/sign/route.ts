@@ -5,6 +5,7 @@ import {
   jsonResponse,
 } from "@/lib/apiSecurity";
 import cloudinary, {
+  ALLOWED_IMAGE_FORMATS,
   PROFILE_IMAGE_FOLDER,
   createProfilePublicId,
 } from "@/lib/cloudinary";
@@ -29,8 +30,15 @@ export async function POST(request: NextRequest) {
     const timestamp = Math.floor(Date.now() / 1000);
     const publicId = createProfilePublicId(session.uid);
 
+    // allowed_formats is part of the signature, so Cloudinary itself rejects
+    // any other file type, even if someone skips the browser checks.
     const signature = cloudinary.utils.api_sign_request(
-      { folder: PROFILE_IMAGE_FOLDER, public_id: publicId, timestamp },
+      {
+        allowed_formats: ALLOWED_IMAGE_FORMATS,
+        folder: PROFILE_IMAGE_FOLDER,
+        public_id: publicId,
+        timestamp,
+      },
       apiSecret,
     );
 
@@ -39,6 +47,7 @@ export async function POST(request: NextRequest) {
       timestamp,
       folder: PROFILE_IMAGE_FOLDER,
       publicId,
+      allowedFormats: ALLOWED_IMAGE_FORMATS,
       apiKey,
       cloudName,
     });
