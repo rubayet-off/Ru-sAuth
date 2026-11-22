@@ -23,6 +23,7 @@ function isValidImageUrl(value: string, publicId: string): boolean {
       url.protocol === "https:" &&
       url.hostname === "res.cloudinary.com" &&
       url.pathname.startsWith(`/${cloudName}/image/upload/`) &&
+      /\.(png|jpe?g)$/i.test(url.pathname) &&
       decodeURIComponent(url.pathname).includes(publicId)
     );
   } catch {
