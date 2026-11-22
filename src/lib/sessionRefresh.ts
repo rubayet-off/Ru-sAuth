@@ -88,12 +88,15 @@ async function runRefresh(force: boolean): Promise<RefreshResult> {
 export function refreshSession(force = false): Promise<RefreshResult> {
   if (inFlight) return inFlight;
 
-  const run = (): Promise<RefreshResult> =>
-    typeof navigator !== "undefined" && navigator.locks
-      ? (navigator.locks.request(LOCK_NAME, () =>
-          runRefresh(force),
-        ) as Promise<RefreshResult>)
-      : runRefresh(force);
+  const run = async (): Promise<RefreshResult> => {
+    if (typeof navigator !== "undefined" && navigator.locks) {
+      // `await` unwraps the lock's result whether the DOM typings describe it
+      // as Promise<T> or Promise<Promise<T>>.
+      return await navigator.locks.request(LOCK_NAME, () => runRefresh(force));
+    }
+
+    return runRefresh(force);
+  };
 
   inFlight = run()
     .catch((): RefreshResult => "failed")
