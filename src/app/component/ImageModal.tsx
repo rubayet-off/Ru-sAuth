@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
-import { Camera, Check, Refresh, Trash, X } from "@mynaui/icons-react";
+import { Camera, Check, Refresh, Trash } from "@mynaui/icons-react";
 
 import { broadcastAuth } from "@/lib/authChannel";
 import { apiRequest } from "@/lib/clientApi";
@@ -21,6 +21,7 @@ interface SignData {
   timestamp: number;
   folder: string;
   publicId: string;
+  allowedFormats: string;
   apiKey: string;
   cloudName: string;
 }
@@ -31,7 +32,17 @@ interface CloudinaryUploadResponse {
   error?: { message?: string };
 }
 
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+// Same button styles as the other dialogs (password and delete account).
+const baseButtonClass =
+  "flex w-full min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 border px-4 py-2.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+const primaryButtonClass = `${baseButtonClass} border-[#0567E3] bg-[#0567E3] text-white hover:bg-transparent`;
+const secondaryButtonClass = `${baseButtonClass} border-[#2d2f36] bg-[#11111B] text-gray-300 hover:border-gray-500 hover:text-white`;
+const dangerButtonClass = `${baseButtonClass} border-[#691919] bg-[#691919]/20 hover:bg-transparent hover:text-white`;
+
+// Only PNG, JPG and JPEG. The file type and the file extension must both
+// match, so a renamed file of another type is rejected.
+const ALLOWED_IMAGE_TYPES = ["image/png", "image/jpeg"];
+const ALLOWED_EXTENSIONS = /\.(png|jpe?g)$/i;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 function isSignData(
@@ -42,6 +53,7 @@ function isSignData(
     typeof data.timestamp === "number" &&
     typeof data.folder === "string" &&
     typeof data.publicId === "string" &&
+    typeof data.allowedFormats === "string" &&
     typeof data.apiKey === "string" &&
     typeof data.cloudName === "string"
   );
@@ -70,6 +82,16 @@ export default function ImageModal({
     if (!loading) onClose();
   }
 
+  // Escape closes the dialog, now that there is no close (X) icon.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !loading) onClose();
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [loading, onClose]);
+
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
 
@@ -78,8 +100,11 @@ export default function ImageModal({
 
     setError("");
 
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
-      setError("Please select a PNG, JPEG or WebP image.");
+    if (
+      !ALLOWED_IMAGE_TYPES.includes(file.type) ||
+      !ALLOWED_EXTENSIONS.test(file.name)
+    ) {
+      setError("Please select a PNG, JPG or JPEG image.");
       return;
     }
     if (file.size > MAX_IMAGE_BYTES) {
@@ -111,6 +136,7 @@ export default function ImageModal({
       formData.append("timestamp", String(sign.data.timestamp));
       formData.append("folder", sign.data.folder);
       formData.append("public_id", sign.data.publicId);
+      formData.append("allowed_formats", sign.data.allowedFormats);
       formData.append("signature", sign.data.signature);
 
       const uploadResponse = await fetch(
@@ -176,7 +202,7 @@ export default function ImageModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 p-3 backdrop-blur-sm sm:items-center sm:p-6"
+      className="fixed inset-0 z-110 flex items-start justify-center overflow-y-auto bg-[#11111B]/93 p-4 sm:items-center"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) handleClose();
       }}
@@ -185,26 +211,16 @@ export default function ImageModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="profile-image-title"
-        className="relative my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl overflow-y-auto overscroll-contain rounded-2xl border border-[#2A2C32] bg-[#17181C] p-5 text-[#EAEAEA] shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-8"
+        className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-3xl overflow-y-auto overscroll-contain border border-[#2d2f36] bg-[#14141d] p-6 text-[#FBFDFC] shadow-2xl sm:p-8"
       >
-        <button
-          type="button"
-          onClick={handleClose}
-          disabled={loading}
-          aria-label="Close dialog"
-          className="absolute right-3 top-3 cursor-pointer rounded-lg p-2 text-[#787878] transition hover:bg-[#2A2C32] hover:text-[#EAEAEA] disabled:cursor-not-allowed disabled:opacity-50 sm:right-5 sm:top-5"
-        >
-          <X size={20} />
-        </button>
-
-        <div className="mb-6 px-8 text-center sm:mb-7 sm:px-10">
+        <div className="mb-6 text-center sm:mb-7">
           <h2
             id="profile-image-title"
-            className="text-lg font-semibold sm:text-xl"
+            className="text-lg font-semibold"
           >
             {isEditing ? "Adjust your photo" : "Profile picture"}
           </h2>
-          <p className="mt-1.5 text-sm leading-relaxed text-[#787878]">
+          <p className="mt-2 text-sm leading-relaxed text-[#A7B8C2]">
             {isEditing
               ? "Drag and zoom to choose the part of the photo to show."
               : "Manage your Ru'sAuth profile image."}
@@ -217,11 +233,11 @@ export default function ImageModal({
           </div>
         ) : (
           <div className="mx-auto mb-6 flex w-full justify-center sm:mb-7">
-            <div className="relative h-56 w-56 shrink-0 overflow-hidden rounded-full border border-[#2A2C32] bg-[#0E0F12] shadow-lg sm:h-72 sm:w-72 md:h-80 md:w-80">
+            <div className="relative h-56 w-56 shrink-0 overflow-hidden rounded-full border border-[#2d2f36] bg-[#11111B] sm:h-72 sm:w-72 md:h-80 md:w-80">
               <Avatar
                 url={imageSrc}
                 name={username}
-                letterClassName="text-6xl text-[#60A5FA] sm:text-7xl"
+                letterClassName="text-8xl text-[#0567E3] sm:text-9xl md:text-[10rem]"
                 sizes="(min-width: 768px) 320px, (min-width: 640px) 288px, 224px"
               />
             </div>
@@ -231,7 +247,7 @@ export default function ImageModal({
         {error && (
           <p
             role="alert"
-            className="mb-5 rounded-lg border border-rose-500/20 bg-rose-500/10 px-3 py-2.5 text-sm leading-relaxed text-rose-400"
+            className="mb-5 border border-[#691919] bg-[#691919]/20 px-3 py-2.5 text-center text-sm leading-relaxed text-rose-300"
           >
             {error}
           </p>
@@ -240,7 +256,7 @@ export default function ImageModal({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp"
+          accept=".png,.jpg,.jpeg,image/png,image/jpeg"
           onChange={handleFileChange}
           className="hidden"
           disabled={loading}
@@ -252,7 +268,7 @@ export default function ImageModal({
               type="button"
               onClick={handleSave}
               disabled={loading}
-              className="flex w-full min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#3B82F6] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#2563EB] disabled:cursor-not-allowed disabled:opacity-60"
+              className={primaryButtonClass}
             >
               <Check size={18} />
               {loading ? "Saving..." : "Save Image"}
@@ -262,7 +278,7 @@ export default function ImageModal({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
-              className="flex w-full min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-[#2A2C32] px-4 py-3 text-sm text-[#A1A1AA] transition hover:bg-[#0E0F12] hover:text-[#EAEAEA] disabled:cursor-not-allowed disabled:opacity-50"
+              className={secondaryButtonClass}
             >
               <Refresh size={18} />
               Choose another
@@ -275,7 +291,7 @@ export default function ImageModal({
                 setError("");
               }}
               disabled={loading}
-              className="w-full min-w-0 flex-1 cursor-pointer rounded-xl border border-[#2A2C32] px-4 py-3 text-sm text-[#A1A1AA] transition hover:bg-[#0E0F12] hover:text-[#EAEAEA] disabled:cursor-not-allowed disabled:opacity-50"
+              className={secondaryButtonClass}
             >
               Cancel
             </button>
@@ -286,7 +302,7 @@ export default function ImageModal({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={loading}
-              className="flex w-full min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#3B82F6] px-4 py-3 text-sm font-medium text-white transition hover:bg-[#2563EB] disabled:cursor-not-allowed disabled:opacity-60"
+              className={primaryButtonClass}
             >
               {imageSrc ? <Refresh size={18} /> : <Camera size={18} />}
               {imageSrc ? "Change Image" : "Add Image"}
@@ -297,7 +313,7 @@ export default function ImageModal({
                 type="button"
                 onClick={handleRemoveImage}
                 disabled={loading}
-                className="flex w-full min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm font-medium text-rose-400 transition hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                className={dangerButtonClass}
               >
                 <Trash size={18} />
                 {loading ? "Removing..." : "Remove Image"}
@@ -308,15 +324,15 @@ export default function ImageModal({
               type="button"
               onClick={handleClose}
               disabled={loading}
-              className="w-full min-w-0 flex-1 cursor-pointer rounded-xl border border-[#2A2C32] px-4 py-3 text-sm text-[#A1A1AA] transition hover:bg-[#0E0F12] hover:text-[#EAEAEA] disabled:cursor-not-allowed disabled:opacity-50"
+              className={secondaryButtonClass}
             >
-              Close
+              Cancel
             </button>
           </div>
         )}
 
-        <p className="mt-5 text-center text-xs leading-relaxed text-[#787878]">
-          PNG, JPEG or WebP · Maximum size 10 MB
+        <p className="mt-5 text-center text-xs leading-relaxed text-[#A7B8C2]">
+          PNG, JPG or JPEG · Maximum size 10 MB
         </p>
       </section>
     </div>
