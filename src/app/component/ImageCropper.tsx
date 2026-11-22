@@ -262,7 +262,7 @@ export default function ImageCropper({
         onPointerCancel={handlePointerEnd}
         onKeyDown={handleKeyDown}
         style={{ width: VIEWPORT, height: VIEWPORT, maxWidth: "100%" }}
-        className="relative touch-none select-none overflow-hidden rounded-full border border-[#2A2C32] bg-[#0E0F12] outline-none focus-visible:border-[#3B82F6] cursor-grab active:cursor-grabbing"
+        className="relative touch-none select-none overflow-hidden rounded-full border border-[#2d2f36] bg-[#11111B] outline-none focus-visible:border-[#0567E3] cursor-grab active:cursor-grabbing"
       >
         <img
           ref={imageRef}
@@ -287,7 +287,7 @@ export default function ImageCropper({
           aria-label="Zoom out"
           disabled={disabled || zoom <= MIN_ZOOM}
           onClick={() => applyZoom(zoom - 0.2)}
-          className="cursor-pointer text-[#787878] transition hover:text-[#EAEAEA] disabled:cursor-not-allowed disabled:opacity-40"
+          className="cursor-pointer text-[#A7B8C2] transition hover:text-[#FBFDFC] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Minus size={18} />
         </button>
@@ -301,7 +301,7 @@ export default function ImageCropper({
           value={zoom}
           disabled={disabled}
           onChange={(event) => applyZoom(Number(event.target.value))}
-          className="h-1 w-full cursor-pointer accent-[#3B82F6]"
+          className="h-1 w-full cursor-pointer accent-[#0567E3]"
         />
 
         <button
@@ -309,13 +309,13 @@ export default function ImageCropper({
           aria-label="Zoom in"
           disabled={disabled || zoom >= MAX_ZOOM}
           onClick={() => applyZoom(zoom + 0.2)}
-          className="cursor-pointer text-[#787878] transition hover:text-[#EAEAEA] disabled:cursor-not-allowed disabled:opacity-40"
+          className="cursor-pointer text-[#A7B8C2] transition hover:text-[#FBFDFC] disabled:cursor-not-allowed disabled:opacity-40"
         >
           <Plus size={18} />
         </button>
       </div>
 
-      <p className="text-center text-xs text-[#787878]">
+      <p className="text-center text-xs text-[#A7B8C2]">
         Drag to reposition · scroll, pinch or use the slider to zoom
       </p>
     </div>
